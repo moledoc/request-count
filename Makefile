@@ -1,10 +1,11 @@
+# TODO: cleanup and naming
 
+# local
 bin:
 	test -d bin/ || mkdir bin
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/entry ./cmd/entry/main.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/instance ./cmd/instance/main.go
 
-# local
 local-toggle-debug:
 	echo "" | nc -U /tmp/instance..8081.sock
 	echo "" | nc -U /tmp/instance..8082.sock
@@ -26,19 +27,20 @@ local-clean: local-down
 	rm -rf ./bin
 
 # docker
-image-instance = request-count-instance
-image-entry = request-count-entry
+image-instance = count_instance
+image-entry = count_entry
 network-request-count = request-count
-container-entry = request-count
+container-entry = count_entry
+container-instance = count_instance
 
-init:
+docker-network-init:
 	docker network create -d bridge $(network-request-count)
 
-build:
+docker-build:
 	docker build -t $(image-instance) -f Dockerfile.instance .
 	docker build -t $(image-entry) -f Dockerfile.entry .
 
-run: build
+docker-run: docker-build
 	docker run -d -i -t -p 127.0.0.1:8083:8083 \
 		--network=$(network-request-count) \
 		-e HOST= \
@@ -51,31 +53,49 @@ run: build
 		--network container:$(container-entry) \
 		-e HOST= \
 		-e PORT=8084 \
-		--name request-count-host1 \
+		--name $(container-instance)1 \
 		$(image-instance)
 		# --rm \
 	docker run -d -i -t \
 		--network container:$(container-entry) \
 		-e HOST= \
 		-e PORT=8085 \
-		--name request-count-host2 \
+		--name $(container-instance)2 \
 		$(image-instance)
 		# --rm \
 	docker run -d -i -t \
 		--network container:$(container-entry) \
 		-e HOST= \
 		-e PORT=8086 \
-		--name request-count-host3 \
+		--name $(container-instance)3 \
 		$(image-instance)
 		# --rm \
 
-down:
+docker-down:
 	docker ps -aq | awk '{print $$1}' | parallel 'docker stop {} && docker rm {}'
 
-restart: down run
+docker-restart: down run
 
-clean: down
+docker-network-clean:
+	docker network rm $(network-request-count)
+
+docker-clean: docker-down
 	docker images | grep $(image-instance) | awk '{print $$3}' | xargs -I {} docker image rm -f "{}"	
 	docker images | grep $(image-entry) | awk '{print $$3}' | xargs -I {} docker image rm -f "{}"	
 	docker images | grep none | awk '{print $$3}' | xargs -I {} docker image rm -f "{}"	
-	docker network rm $(network-request-count)
+
+# docker-compose
+build:
+	docker-compose -f ./docker-compose.yml -p "count" build
+
+up:
+	docker-compose -f ./docker-compose.yml -p "count" up -d
+
+down:
+	docker-compose -f ./docker-compose.yml -p "count" down
+
+run:
+	docker-compose -f ./docker-compose.yml -p "count" up -d --build
+
+clean:
+	docker-compose -f ./docker-compose.yml -p "count" down --rmi all -v --remove-orphans

@@ -15,7 +15,7 @@ type counter struct{}
 var (
 	clusterCount atomic.Int64
 	order        atomic.Int64
-	instances    []string
+	instances    []string // MAYBE: TODO: dynamically add/remove instances
 	host         = os.Getenv("HOST")
 	port         = os.Getenv("PORT")
 	respBase     = "You are talking to instance %v.\nThis is request %v to this instance and request %v to the cluster.\n"
