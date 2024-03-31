@@ -25,6 +25,8 @@ func (*counter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := net.Dial("tcp", instance)
 	if err != nil {
 		fmt.Fprintf(w, "request failed: %v\n", err)
+		instances = append(instances[:idx], instances[idx+1:]...) // TODO: lock/unlock resource
+		order.Swap((idx) % int64(len(instances)))
 		return
 	}
 	defer conn.Close()

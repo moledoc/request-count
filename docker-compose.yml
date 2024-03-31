@@ -7,7 +7,7 @@ services:
         environment:
             - HOST=
             - PORT=8083
-            - INSTANCES=request-count_instance_1:8083
+            - INSTANCES=request-count_instance_1:8083,request-count_instance_2:8083
 # TODO: approach INSTANCES in a more scalable way
         ports:
             - 127.0.0.1:8083:8083
@@ -17,19 +17,21 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.instance
+        depends_on:
+            - entry
         environment:
-            - HOST=host
+            - HOST=
             - PORT=8083
-            - RECV_HOST=host
-            - RECV_PORT=8181
-            - SEND_HOST=host
-            - SEND_PORT=8181
+            - RECV_HOST=
+            - RECV_PORT=8183
+            - SEND_HOST=request-count_instance_1
+            - SEND_PORT=8183
         networks:
             - request-count
-        hostname: host
         deploy:
             mode: replicated
-            replicas: 1
+            replicas: 3
+            endpoint_mode: vip # dnsrr # NOTE: my docker-compose version is not high enough
 
 networks:
   request-count:
