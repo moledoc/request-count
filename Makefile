@@ -26,7 +26,6 @@ local-clean: local-down
 	rm -rf ./bin
 
 # docker
-
 image-instance = request-count-instance
 image-entry = request-count-entry
 network-request-count = request-count
@@ -39,46 +38,33 @@ build:
 	docker build -t $(image-instance) -f Dockerfile.instance .
 	docker build -t $(image-entry) -f Dockerfile.entry .
 
-# http://host1
 run: build
-	docker run -d -i -t -p 127.0.0.1:8083:8081 \
+	docker run -d -i -t -p 127.0.0.1:8083:8083 \
 		--network=$(network-request-count) \
-		-e HOST="" \
-		-e PORT="8081" \
-		-e INSTANCES=":8082,:8084,:8083" \
+		-e HOST= \
+		-e PORT=8083 \
+		-e INSTANCES=:8084,:8085,:8086 \
 		--name $(container-entry) \
 		$(image-entry)
 		# --rm \
 	docker run -d -i -t \
 		--network container:$(container-entry) \
-		-e HOST="" \
-		-e PORT="8082" \
-		-e RECV_HOST="" \
-		-e RECV_PORT="8182" \
-		-e SEND_HOST="" \
-		-e SEND_PORT="8183" \
+		-e HOST= \
+		-e PORT=8084 \
 		--name request-count-host1 \
 		$(image-instance)
 		# --rm \
 	docker run -d -i -t \
 		--network container:$(container-entry) \
-		-e HOST="" \
-		-e PORT="8083" \
-		-e RECV_HOST="" \
-		-e RECV_PORT="8183" \
-		-e SEND_HOST="" \
-		-e SEND_PORT="8184" \
+		-e HOST= \
+		-e PORT=8085 \
 		--name request-count-host2 \
 		$(image-instance)
 		# --rm \
 	docker run -d -i -t \
 		--network container:$(container-entry) \
-		-e HOST="" \
-		-e PORT="8084" \
-		-e RECV_HOST="" \
-		-e RECV_PORT="8184" \
-		-e SEND_HOST="" \
-		-e SEND_PORT="8182" \
+		-e HOST= \
+		-e PORT=8086 \
 		--name request-count-host3 \
 		$(image-instance)
 		# --rm \

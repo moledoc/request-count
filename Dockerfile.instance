@@ -3,5 +3,4 @@ FROM golang:1.22
 WORKDIR /app
 COPY ./cmd/instance/main.go ./instance.go
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o instance instance.go
-CMD ["mkdir" "/tmp"]
 ENTRYPOINT ["/app/instance"]
