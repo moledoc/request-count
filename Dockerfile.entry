@@ -1,7 +1,7 @@
 FROM golang:1.22
 
 WORKDIR /app
-COPY *.go ./
+COPY ./cmd/entry/main.go ./entry.go
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o entry entry.go
 EXPOSE 8083
 ENTRYPOINT ["/app/entry"]

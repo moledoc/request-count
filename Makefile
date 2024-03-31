@@ -37,7 +37,7 @@ run: build
 		--network=$(network-request-count) \
 		-e HOST="" \
 		-e PORT="8081" \
-		-e INSTANCES=":8082,:8083,:8084" \
+		-e INSTANCES=":8082,:8084,:8083" \
 		--name $(container-entry) \
 		$(image-entry)
 		# --rm \
