@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -61,7 +62,7 @@ func debugLog(format string, a ...any) {
 }
 
 func toggleDebug() {
-	address := fmt.Sprintf("/tmp/instance.%v.%v.sock", host, port)
+	address := fmt.Sprintf("/tmp/instance.%v.%v.sock", strings.ReplaceAll(host, "http://", ""), port)
 	if err := os.RemoveAll(address); err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR]: failed to remove all from socket %q: %v\n", address, err)
 		return
@@ -116,6 +117,7 @@ func syncRecv() {
 				debugLog("address %q cluster count didn't change\n", address)
 				return
 			}
+			syncSend(recvClusterCount)
 			clusterCount.Store(recvClusterCount)
 			debugLog("address %q stored new cluster count: %v \n", address, recvClusterCount)
 		}(conn)
@@ -156,6 +158,21 @@ func (*counter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	go syncSend(newClusterCount)
 }
 
+func serve(conn net.Conn) {
+	newInstanceCount := instanceCount.Load() + 1
+	newClusterCount := clusterCount.Load() + 1
+
+	go instanceCount.Add(1)
+	go clusterCount.Add(1)
+
+	resp := fmt.Sprintf(respBase, host, port, newInstanceCount, newClusterCount)
+	_, err := conn.Write([]byte(resp))
+	if err != nil {
+		debugLog("failed to serve a response: %q\n", resp)
+	}
+	syncSend(newClusterCount)
+}
+
 func main() {
 	debugFlag := flag.Bool("debug", false, "enable debug logs")
 	flag.Parse()
@@ -179,5 +196,26 @@ func main() {
 	go syncRecv()
 	address := fmt.Sprintf("%v:%v", host, port)
 	debugLog("serving on address %q\n", address)
-	http.ListenAndServe(address, &counter{})
+	// http.ListenAndServe(address, &counter{})
+
+	listen, err := net.Listen("tcp", address)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[ERROR]: listening %v failed: %v\n", address, err)
+		return
+	}
+	for i := 0; ; i++ {
+		conn, err := listen.Accept()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "[ERROR]: failed to get the next connection: %v\n", err)
+			return
+		}
+		debugLog("accepted %v-th connection\n", i+1)
+		go func(c net.Conn) {
+			debugLog("opened %v-th connection", i+1)
+			defer debugLog("handled %v-th connection\n", i+1)
+			defer c.Close()
+			serve(c)
+		}(conn)
+	}
+
 }
