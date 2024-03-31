@@ -12,7 +12,7 @@ services:
         ports:
             - 127.0.0.1:8083:8083
         networks:
-            - request-count
+            - request-count-compose
     instance:
         build:
             context: .
@@ -22,17 +22,13 @@ services:
         environment:
             - HOST=
             - PORT=8083
-            - RECV_HOST=
-            - RECV_PORT=8183
-            - SEND_HOST=request-count_instance_1
-            - SEND_PORT=8183
         networks:
-            - request-count
+            - request-count-compose
         deploy:
             mode: replicated
             replicas: 3
             endpoint_mode: vip # dnsrr # NOTE: my docker-compose version is not high enough
 
 networks:
-  request-count:
-    external: true 
+  request-count-compose:
+    external: false 

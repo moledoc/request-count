@@ -77,4 +77,5 @@ restart: down run
 clean: down
 	docker images | grep $(image-instance) | awk '{print $$3}' | xargs -I {} docker image rm -f "{}"	
 	docker images | grep $(image-entry) | awk '{print $$3}' | xargs -I {} docker image rm -f "{}"	
+	docker images | grep none | awk '{print $$3}' | xargs -I {} docker image rm -f "{}"	
 	docker network rm $(network-request-count)
