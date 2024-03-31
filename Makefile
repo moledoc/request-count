@@ -11,9 +11,9 @@ local-toggle-debug:
 	echo "" | nc -U /tmp/instance..8083.sock
 
 local-run: bin
-	HOST="" PORT="8084" RECV_HOST="" RECV_PORT="8184" SEND_HOST="" SEND_PORT="8185" ./bin/instance &
-	HOST="" PORT="8085" RECV_HOST="" RECV_PORT="8185" SEND_HOST="" SEND_PORT="8186" ./bin/instance &
-	HOST="" PORT="8086" RECV_HOST="" RECV_PORT="8186" SEND_HOST="" SEND_PORT="8184" ./bin/instance &
+	HOST="" PORT="8084" ./bin/instance &
+	HOST="" PORT="8085" ./bin/instance &
+	HOST="" PORT="8086" ./bin/instance &
 	HOST="" PORT="8083" INSTANCES=":8085,:8084,:8086" ./bin/entry &
 
 local-restart: local-down local-run
@@ -21,6 +21,9 @@ local-restart: local-down local-run
 local-down:
 	pgrep instance | parallel 'kill -9 {}'
 	pgrep entry | parallel 'kill -9 {}'
+
+local-clean: local-down
+	rm -rf ./bin
 
 # docker
 

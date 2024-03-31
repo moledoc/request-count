@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 	"net/http"
@@ -12,34 +13,40 @@ import (
 type counter struct{}
 
 var (
-	order     atomic.Int64
-	instances []string
-	host      = os.Getenv("HOST")
-	port      = os.Getenv("PORT")
+	clusterCount atomic.Int64
+	order        atomic.Int64
+	instances    []string
+	host         = os.Getenv("HOST")
+	port         = os.Getenv("PORT")
+	respBase     = "You are talking to instance %v.\nThis is request %v to this instance and request %v to the cluster.\n"
 )
 
 func (*counter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	newClusterCount := clusterCount.Load() + 1
+	go clusterCount.Add(1)
+
 	idx := order.Load()
 	order.Swap((idx + 1) % int64(len(instances)))
 	instance := instances[idx]
+
 	conn, err := net.Dial("tcp", instance)
 	if err != nil {
-		fmt.Fprintf(w, "request failed: %v\n", err)
+		fmt.Fprintf(w, "request to %q failed: %q\ndiscarding %q, please send new request\n", instance, err, instance)
 		instances = append(instances[:idx], instances[idx+1:]...) // TODO: lock/unlock resource
-		order.Swap((idx) % int64(len(instances)))
+		order.Swap(idx % int64(len(instances)))
 		return
 	}
 	defer conn.Close()
 
-	buf := make([]byte, 1024)
-	n, err := conn.Read(buf)
+	buf := make([]byte, 8)
+	_, err = conn.Read(buf)
 	if err != nil {
 		fmt.Fprintf(w, "failed to read a response: %v\n", err)
 		return
 	}
-	buf = buf[:n]
+	instanceCount := int64(binary.LittleEndian.Uint64(buf))
 
-	resp := string(buf)
+	resp := fmt.Sprintf(respBase, instance, instanceCount, newClusterCount)
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Content-Length", fmt.Sprintf("%v", len(resp)))
