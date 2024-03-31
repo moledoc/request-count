@@ -18,47 +18,69 @@ local-down:
 	pgrep entry | parallel 'kill -9 {}'
 
 # docker
+
+image-instance = request-count-instance
+image-entry = request-count-entry
+network-request-count = request-count
+container-entry = request-count
+
+init:
+	docker network create -d bridge $(network-request-count)
+
 build:
-	docker build -t round-robin .
-	docker network create -d bridge request-count
+	docker build -t $(image-instance) -f Dockerfile.instance .
+	docker build -t $(image-entry) -f Dockerfile.entry .
 
 # http://host1
 run: build
-	docker run -d -i -t -p 8081:8081 \
-		-e HOST="http://round-robin-host1" \
+	docker run -d -i -t -p 127.0.0.1:8083:8081 \
+		--network=$(network-request-count) \
+		-e HOST="" \
 		-e PORT="8081" \
-		-e RECV_HOST="http://round-robin-host1" \
-		-e RECV_PORT="8181" \
-		-e SEND_HOST="http://round-robin-host2" \
-		-e SEND_PORT="8182" \
-		--name round-robin-host1 \
-		round-robin
+		-e INSTANCES=":8082,:8083,:8084" \
+		--name $(container-entry) \
+		$(image-entry)
 		# --rm \
-	docker run -d -i -t -p 8082:8082 \
-		-e HOST="http://round-robin-host2" \
+	docker run -d -i -t \
+		--network container:$(container-entry) \
+		-e HOST="" \
 		-e PORT="8082" \
-		-e RECV_HOST="http://round-robin-host2" \
+		-e RECV_HOST="" \
 		-e RECV_PORT="8182" \
-		-e SEND_HOST="http://round-robin-host3" \
+		-e SEND_HOST="" \
 		-e SEND_PORT="8183" \
-		--name round-robin-host2 \
-		round-robin
+		--name request-count-host1 \
+		$(image-instance)
 		# --rm \
-	docker run -d -i -t -p 8083:8083 \
-		-e HOST="http://round-robin-host3" \
+	docker run -d -i -t \
+		--network container:$(container-entry) \
+		-e HOST="" \
 		-e PORT="8083" \
-		-e RECV_HOST="http://round-robin-host3" \
+		-e RECV_HOST="" \
 		-e RECV_PORT="8183" \
-		-e SEND_HOST="http://round-robin-host1" \
-		-e SEND_PORT="8181" \
-		--name round-robin-host3 \
-		round-robin
+		-e SEND_HOST="" \
+		-e SEND_PORT="8184" \
+		--name request-count-host2 \
+		$(image-instance)
+		# --rm \
+	docker run -d -i -t \
+		--network container:$(container-entry) \
+		-e HOST="" \
+		-e PORT="8084" \
+		-e RECV_HOST="" \
+		-e RECV_PORT="8184" \
+		-e SEND_HOST="" \
+		-e SEND_PORT="8182" \
+		--name request-count-host3 \
+		$(image-instance)
 		# --rm \
 
 down:
 	docker ps -aq | awk '{print $$1}' | parallel 'docker stop {} && docker rm {}'
 
+restart: down run
 
 clean: down
-	docker images | grep round-robin | awk '{print $$3}' | xargs -I {} docker image rm "{}"	
-	docker network rm request-count
+	docker images | grep $(image-instance) | awk '{print $$3}' | xargs -I {} docker image rm "{}"	
+	docker images | grep $(image-entry) | awk '{print $$3}' | xargs -I {} docker image rm "{}"	
+	docker network rm $(network-request-count)

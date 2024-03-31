@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
+	// "strings"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -62,7 +62,7 @@ func debugLog(format string, a ...any) {
 }
 
 func toggleDebug() {
-	address := fmt.Sprintf("/tmp/instance.%v.%v.sock", strings.ReplaceAll(host, "http://", ""), port)
+	address := fmt.Sprintf("/tmp/instance.%v.%v.sock", host, port)
 	if err := os.RemoveAll(address); err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR]: failed to remove all from socket %q: %v\n", address, err)
 		return
