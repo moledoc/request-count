@@ -1,0 +1,36 @@
+version: '3'
+services:
+    entry:
+        build:
+            context: .
+            dockerfile: Dockerfile.entry
+        environment:
+            - HOST=
+            - PORT=8083
+            - INSTANCES=request-count_instance_1:8083
+# TODO: approach INSTANCES in a more scalable way
+        ports:
+            - 127.0.0.1:8083:8083
+        networks:
+            - request-count
+    instance:
+        build:
+            context: .
+            dockerfile: Dockerfile.instance
+        environment:
+            - HOST=host
+            - PORT=8083
+            - RECV_HOST=host
+            - RECV_PORT=8181
+            - SEND_HOST=host
+            - SEND_PORT=8181
+        networks:
+            - request-count
+        hostname: host
+        deploy:
+            mode: replicated
+            replicas: 1
+
+networks:
+  request-count:
+    external: true 
