@@ -1,0 +1,47 @@
+This file contains versions of programs I used during development.
+
+$ uname -a
+Linux debian 6.1.0-18-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.76-1 (2024-02-01) x86_64 GNU/Linux
+
+$ go version
+go version go1.22.0 linux/amd64
+
+$ docker version
+Client:
+ Version:           20.10.24+dfsg1
+ API version:       1.41
+ Go version:        go1.19.8
+ Git commit:        297e128
+ Built:             Thu May 18 08:38:34 2023
+ OS/Arch:           linux/amd64
+ Context:           default
+ Experimental:      true
+
+Server:
+ Engine:
+  Version:          20.10.24+dfsg1
+  API version:      1.41 (minimum version 1.12)
+  Go version:       go1.19.8
+  Git commit:       5d6db84
+  Built:            Thu May 18 08:38:34 2023
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          1.6.20~ds1
+  GitCommit:        1.6.20~ds1-1+b1
+ runc:
+  Version:          1.1.5+ds1
+  GitCommit:        1.1.5+ds1-1+deb12u1
+ docker-init:
+  Version:          0.19.0
+  GitCommit:
+
+$ docker-compose version       
+docker-compose version 1.29.2, build unknown
+docker-py version: 5.0.3
+CPython version: 3.11.2
+OpenSSL version: OpenSSL 3.0.11 19 Sep 2023
+
+$ make --version
+GNU Make 4.3
+Built for x86_64-pc-linux-gnu

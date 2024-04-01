@@ -17,6 +17,7 @@ type listenersChan chan net.Listener
 var (
 	instanceCount atomic.Int64
 	debug         atomic.Bool
+	debugFile     *os.File
 	host          = os.Getenv("HOST")
 	port          = os.Getenv("PORT")
 	//
@@ -50,10 +51,17 @@ func debugLog(format string, a ...any) {
 	if !debug.Load() {
 		return
 	}
-	fmt.Fprintf(os.Stderr, format, a...)
+	fmt.Fprintf(debugFile, format, a...)
 }
 
 func toggleDebug() {
+	var err error
+	debugFilename := fmt.Sprintf("/tmp/instance.%v.%v.debug.log", host, port)
+	debugFile, err = os.OpenFile(debugFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[WARNING]: failed to open %q for logging: %v\nSetting stderr as logs output\n", debugFilename, err)
+		debugFile = os.Stderr
+	}
 	address := fmt.Sprintf("/tmp/instance.%v.%v.sock", host, port)
 	if err := os.RemoveAll(address); err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR]: failed to remove all from socket %q: %v\n", address, err)

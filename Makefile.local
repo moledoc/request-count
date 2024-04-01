@@ -4,9 +4,9 @@ bin:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/instance ./cmd/instance/main.go
 
 toggle-debug:
-	echo "" | nc -U /tmp/instance..8081.sock
-	echo "" | nc -U /tmp/instance..8082.sock
-	echo "" | nc -U /tmp/instance..8083.sock
+	echo "" | nc -U /tmp/instance..8084.sock
+	echo "" | nc -U /tmp/instance..8085.sock
+	echo "" | nc -U /tmp/instance..8086.sock
 
 run: bin
 	HOST="" PORT="8084" ./bin/instance &
@@ -17,8 +17,10 @@ run: bin
 restart: down run
 
 down:
-	pgrep instance | parallel 'kill -9 {}'
-	pgrep entry | parallel 'kill -9 {}'
+	pgrep instance | xargs -I {} kill -9 "{}"
+	pgrep entry | xargs -I {} kill -9 "{}"
+	# pgrep instance | parallel 'kill -9 {}'
+	# pgrep entry | parallel 'kill -9 {}'
 
 clean: down
 	rm -rf ./bin

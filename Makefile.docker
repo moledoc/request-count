@@ -13,37 +13,40 @@ build:
 
 run: build
 	docker run -d -i -t -p 127.0.0.1:8083:8083 \
+		--rm \
 		--network=$(network-request-count) \
 		-e HOST= \
 		-e PORT=8083 \
 		-e INSTANCES=:8084,:8085,:8086 \
 		--name $(container-entry) \
 		$(image-entry)
-		# --rm \
 	docker run -d -i -t \
+		--rm \
 		--network container:$(container-entry) \
 		-e HOST= \
 		-e PORT=8084 \
 		--name $(container-instance)1 \
 		$(image-instance)
-		# --rm \
 	docker run -d -i -t \
+		--rm \
 		--network container:$(container-entry) \
 		-e HOST= \
 		-e PORT=8085 \
 		--name $(container-instance)2 \
 		$(image-instance)
-		# --rm \
 	docker run -d -i -t \
+		--rm \
 		--network container:$(container-entry) \
 		-e HOST= \
 		-e PORT=8086 \
 		--name $(container-instance)3 \
 		$(image-instance)
-		# --rm \
 
 down:
-	docker ps -aq | awk '{print $$1}' | parallel 'docker stop {} && docker rm {}'
+	docker ps -a | grep "$(container-instance)\|$(container-entry)" | awk '{print $$1}' | xargs -I {} docker stop "{}"
+	# docker ps -a | grep "$(container-instance)\|$(container-entry)" | awk '{print $$1}' | xargs -I {} docker rm "{}" # NOTE: only needed if no `--rm` flag in `docker run`.
+	# docker ps -a | grep "$(container-instance)\|$(container-entry)" | parallel 'docker stop {} && docker rm {}' # NOTE: use `parallel` to stop and rm project related containers
+	# docker ps -aq | parallel 'docker stop {} && docker rm {}' # NOTE: use `parallel` to stop and rm all running containers
 
 restart: down run
 

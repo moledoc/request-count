@@ -15,7 +15,7 @@ type counter struct{}
 var (
 	clusterCount atomic.Int64
 	order        atomic.Int64
-	instances    []string // MAYBE: TODO: dynamically add/remove instances
+	instances    []string
 	host         = os.Getenv("HOST")
 	port         = os.Getenv("PORT")
 	respBase     = "You are talking to instance %v.\nThis is request %v to this instance and request %v to the cluster.\n"
@@ -32,9 +32,8 @@ func (*counter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := net.Dial("tcp", instance)
 	if err != nil {
 		fmt.Fprintf(w, "request to %q failed: %q\ndiscarding %q, please send new request\n", instance, err, instance)
-		instances = append(instances[:idx], instances[idx+1:]...) // MAYBE: TODO: lock/unlock resource
+		instances = append(instances[:idx], instances[idx+1:]...)
 		order.Swap(idx % int64(len(instances)))
-		// MAYBE: TODO: when instances is empty
 		return
 	}
 	defer conn.Close()
