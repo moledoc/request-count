@@ -1,0 +1,24 @@
+bin:
+	test -d bin/ || mkdir bin
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/entry ./cmd/entry/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/instance ./cmd/instance/main.go
+
+toggle-debug:
+	echo "" | nc -U /tmp/instance..8081.sock
+	echo "" | nc -U /tmp/instance..8082.sock
+	echo "" | nc -U /tmp/instance..8083.sock
+
+run: bin
+	HOST="" PORT="8084" ./bin/instance &
+	HOST="" PORT="8085" ./bin/instance &
+	HOST="" PORT="8086" ./bin/instance &
+	HOST="" PORT="8083" INSTANCES=":8085,:8084,:8086" ./bin/entry &
+
+restart: down run
+
+down:
+	pgrep instance | parallel 'kill -9 {}'
+	pgrep entry | parallel 'kill -9 {}'
+
+clean: down
+	rm -rf ./bin

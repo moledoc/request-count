@@ -8,7 +8,6 @@ services:
             - HOST=
             - PORT=8083
             - INSTANCES=count_instance_1:8083,count_instance_2:8083,count_instance_3:8083
-# TODO: approach INSTANCES in a more scalable way
         ports:
             - 127.0.0.1:8083:8083
         networks:
