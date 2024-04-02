@@ -25,7 +25,7 @@ This proof-of-concept project has set up 3 ways to run the application:
 
 ### Locally
 
-The `make` targets for locally ran application are located in `Makefile.local`.
+The `make` targets for locally running the application are located in `Makefile.local`.
 This means that `-f Makefile.local` flag needs to be used when running `make`.
 For example
 
@@ -48,11 +48,11 @@ Possible `make` targets are:
 * `run`- compiles and starts the application on `localhost:8083`
 * `down` - stops the application
 * `clean` - stops the application and deletes `./bin` directory 
-* `toggle-debug` - toggles the debug flag, which enables/disables extra logs; logs can be found at `/tmp/instance.<host>.<port>.debug.log
+* `toggle-debug` - toggles the debug flag, which enables/disables extra logs; logs can be found at `/tmp/instance.<host>.<port>.debug.log`
 
 ### Docker
 
-The `make` targets for application ran with `docker` are located in `Makefile.docker`.
+The `make` targets for running the application with `docker` are located in `Makefile.docker`.
 This means that `-f Makefile.docker` flag needs to be used when running `make`.
 For example
 
@@ -107,7 +107,7 @@ echo "" | nc -U /tmp/instance.<host>.<port>.sock
 
 ## Docker-compose
 
-The `make` targets for application ran with `docker-compose` are located in `Makefile.docker-compose`.
+The `make` targets for running the application with `docker-compose` are located in `Makefile.docker-compose`.
 This means that `-f Makefile.docker-compose` flag needs to be used when running `make`.
 For example
 
