@@ -86,9 +86,12 @@ kubectl delete service/full-coral
 
 Aim is to deploy local docker image to kubernetes.
 For that we need to 
-* create a local docker registry;
+* start minikube in a way that we can access docker images from local registry;
 ```sh
-docker run -d -p 5000:5000 --restart=always --name registry registry:2
+# https://minikube.sigs.k8s.io/docs/handbook/registry/
+minikube start --insecure-registry "10.0.0.0/24"
+minikube addons enable registry
+docker run --rm -it -d --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip):5000"
 ```
 * build docker images with tag suitable for local registry
 ```sh
@@ -98,31 +101,33 @@ docker build -t localhost:5000/count_instance -f Dockerfile.entry .
 * push the image to the registry
 ```sh
 docker push localhost:5000/count_entry
+docker push localhost:5000/count_instance
 ```
-to see the registry, run
+to see the registry
 ```sh
 curl localhost:5000/v2/_catalog
 ```
 
---- TODO: below this line I still have some things to figure out - getting `(BadRequest): container "entry" in pod "entry" is waiting to start: trying and failing to pull image`
-
-Next we need to create a manifest file.
-For example:
+Now we need to create and expose the application with `kubectl`
 ```sh
-printf "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: entry-deployment\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: entry\n  template:\n    metadata:\n      labels:\n        app: entry\n    spec:\n      containers:\n      - name: entry-container\n        image: localhost:5000/count_entry\n        ports:\n        - containerPort: 8083" > manifest.yaml
+kubectl create -f ./devopsing/entry.yaml
+kubectl expose deployment entry --type=NodePort --port=8083 --target-port=8083 --protocol=TCP
+
+kubectl create -f ./devopsing/instance.yaml
 ```
 
-Lastly we deploy it with `kubectl`
+and then we can send a request against deployed application
 ```sh
-kubectl create -f ./manifest.yaml
+export NODE_PORT="$(kubectl get services/entry -o go-template='{{(index .spec.ports 0).nodePort}}')"
+echo "NODE_PORT=$NODE_PORT"
+curl $(minikube ip):${NODE_PORT}
 ```
 
-### Possible fixes/helpful commands
+--- TODO: link entry with instances, currently entry responds with an error
 
-Solving the TODO mentioned above
-
+Also, some helpful commands
 ```sh
-eval $(minikube -p minikube docker-env)
+kubectl exec -it <pod name> -- <cmd ran in the pod (can be `sh`)>
 ```
 
 

@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: entry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: entry
+  template:
+    metadata:
+      labels:
+        app: entry
+    spec:
+      containers:
+      - name: entry-container
+        image: localhost:5000/count_entry
+        ports:
+        - containerPort: 8083
+        env:
+        - name: INSTANCES
+          value: ":8084,:8085,:8086"
+        - name: HOST
+          value: ""
+        - name: PORT
+          value: "8083"
