@@ -96,7 +96,7 @@ docker run --rm -it -d --network=host alpine ash -c "apk add socat && socat TCP-
 * build docker images with tag suitable for local registry
 ```sh
 docker build -t localhost:5000/count_entry -f Dockerfile.entry .
-docker build -t localhost:5000/count_instance -f Dockerfile.entry .
+docker build -t localhost:5000/count_instance -f Dockerfile.instance .
 ```
 * push the image to the registry
 ```sh
@@ -110,10 +110,12 @@ curl localhost:5000/v2/_catalog
 
 Now we need to create and expose the application with `kubectl`
 ```sh
-kubectl create -f ./devopsing/entry.yaml
-kubectl expose deployment entry --type=NodePort --port=8083 --target-port=8083 --protocol=TCP
+kubectl apply -f ./devopsing/instance.yaml
+kubectl expose deployment instance --protocol=TCP
 
-kubectl create -f ./devopsing/instance.yaml
+INSTANCE_IP=$(kubectl get service/instance -o jsonpath='{.spec.clusterIP}')
+sed "s/INSTANCE_IP/${INSTANCE_IP}/" ./devopsing/entry.yaml | kubectl apply -f -
+kubectl expose deployment entry --type=NodePort --port=8083 --target-port=8083 --protocol=TCP
 ```
 
 and then we can send a request against deployed application
@@ -122,8 +124,6 @@ export NODE_PORT="$(kubectl get services/entry -o go-template='{{(index .spec.po
 echo "NODE_PORT=$NODE_PORT"
 curl $(minikube ip):${NODE_PORT}
 ```
-
---- TODO: link entry with instances, currently entry responds with an error
 
 Also, some helpful commands
 ```sh

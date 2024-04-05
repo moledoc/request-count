@@ -19,7 +19,7 @@ spec:
         - containerPort: 8083
         env:
         - name: INSTANCES
-          value: ":8084,:8085,:8086"
+          value: "INSTANCE_IP:8083"
         - name: HOST
           value: ""
         - name: PORT
