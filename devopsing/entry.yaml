@@ -19,7 +19,7 @@ spec:
         - containerPort: 8083
         env:
         - name: INSTANCES
-          value: "INSTANCE_IP:8083"
+          value: "INSTANCE_IP:8083" # INSTANCE_IP should be replace with result from command `kubectl get service/instance -o jsonpath='{.spec.clusterIP}'`
         - name: HOST
           value: ""
         - name: PORT
