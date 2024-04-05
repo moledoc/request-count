@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: instance
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: instance
+  template:
+    metadata:
+      labels:
+        app: instance
+    spec:
+      containers:
+      - name: instance-container
+        image: localhost:5000/count_instance
+        ports:
+        - containerPort: 8083
+        env:
+        - name: HOST
+          value: ""
+        - name: PORT
+          value: "8083"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: instance-v2
+spec:
+  type: ClusterIP
+  selector:
+    app: instance
+  ports:
+  - name: instance
+    protocol: TCP
+    port: 8083
