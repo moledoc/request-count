@@ -18,8 +18,17 @@ var (
 	instanceCount atomic.Int64
 	debug         atomic.Bool
 	debugFile     *os.File
-	host          = os.Getenv("HOST")
-	port          = os.Getenv("PORT")
+
+	host     = os.Getenv("HOST")
+	port     = os.Getenv("PORT")
+	hostName = func(host string, port string) string {
+		hostname := os.Getenv("HOSTNAME")
+		if len(hostname) == 0 {
+			hostname = host
+		}
+		return fmt.Sprintf("%v:%v", hostname, port)
+	}(host, port)
+	respBase = "You are talking to instance %v.\nThis is request %v to this instance and request %v to the cluster.\n"
 	//
 	listenersSize               = 1
 	listeners     listenersChan = listenersChan(make(chan net.Listener, listenersSize))
@@ -27,7 +36,7 @@ var (
 
 func (lc listenersChan) add(l net.Listener) {
 	if len(lc)+1 > listenersSize {
-		fmt.Fprintf(os.Stderr, "[ERROR]: too many listeners opened\n")
+		fmt.Fprintf(debugFile, "[ERROR]: too many listeners opened\n")
 		l.Close()
 		lc.close()
 		os.Exit(1)
@@ -41,7 +50,7 @@ func (lc listenersChan) close() {
 	}
 	for i := 0; i < listenersSize; i++ {
 		l := <-lc
-		fmt.Fprintf(os.Stderr, "[INFO]: closing listener: %v\n", l.Addr().String())
+		fmt.Fprintf(debugFile, "[INFO]: closing listener: %v\n", l.Addr().String())
 		l.Close()
 	}
 	close(lc)
@@ -59,17 +68,17 @@ func toggleDebug() {
 	debugFilename := fmt.Sprintf("/tmp/instance.%v.%v.debug.log", host, port)
 	debugFile, err = os.OpenFile(debugFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "[WARNING]: failed to open %q for logging: %v\nSetting stderr as logs output\n", debugFilename, err)
+		fmt.Fprintf(debugFile, "[WARNING]: failed to open %q for logging: %v\nSetting stderr as logs output\n", debugFilename, err)
 		debugFile = os.Stderr
 	}
 	address := fmt.Sprintf("/tmp/instance.%v.%v.sock", host, port)
 	if err := os.RemoveAll(address); err != nil {
-		fmt.Fprintf(os.Stderr, "[ERROR]: failed to remove all from socket %q: %v\n", address, err)
+		fmt.Fprintf(debugFile, "[ERROR]: failed to remove all from socket %q: %v\n", address, err)
 		return
 	}
 	listenDebug, err := net.Listen("unix", address)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "[ERROR]: listening %v failed: %v\n", address, err)
+		fmt.Fprintf(debugFile, "[ERROR]: listening %v failed: %v\n", address, err)
 		return
 	}
 	listeners.add(listenDebug)
@@ -105,17 +114,17 @@ func main() {
 
 	listen, err := net.Listen("tcp", address)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "[ERROR]: listening %v failed: %v\n", address, err)
+		fmt.Fprintf(debugFile, "[ERROR]: listening %v failed: %v\n", address, err)
 		return
 	}
 	for i := 0; ; i++ {
 		conn, err := listen.Accept()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "[ERROR]: failed to get the next connection: %v\n", err)
+			fmt.Fprintf(debugFile, "[ERROR]: failed to get the next connection: %v\n", err)
 			return
 		}
 		debugLog("accepted %v-th connection\n", i+1)
-		go func(c net.Conn) {
+		go func(c net.Conn, i int) {
 			debugLog("opened %v-th connection", i+1)
 			defer debugLog("handled %v-th connection\n", i+1)
 			defer c.Close()
@@ -123,15 +132,24 @@ func main() {
 			newInstanceCount := instanceCount.Load() + 1
 			go instanceCount.Add(1)
 
-			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
+			c.SetReadDeadline(time.Now().Add(5 * time.Second))
 			buf := make([]byte, 8)
-			binary.LittleEndian.PutUint64(buf, uint64(newInstanceCount))
-			n, err := c.Write(buf)
-			debugLog("wrote %v/%v bytes (%v): %v\n", n, len(buf), buf, err)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "[ERROR]: failed to send new instance count: %v\n", err)
+			n, err := c.Read(buf)
+			clusterCount := int64(binary.LittleEndian.Uint64(buf))
+			if err != nil || n != 8 {
+				debugLog("failed to read a response: %v\n", err)
+				return
 			}
-		}(conn)
+
+			resp := fmt.Sprintf(respBase, hostName, newInstanceCount, clusterCount)
+			respBytes := []byte(resp)
+			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
+			n, err = c.Write(respBytes)
+			debugLog("wrote %v/%v bytes (%v): %v\n", n, len(respBytes), respBytes, err)
+			if err != nil {
+				fmt.Fprintf(debugFile, "[ERROR]: failed to send new instance count: %v\n", err)
+			}
+		}(conn, i)
 	}
 
 }

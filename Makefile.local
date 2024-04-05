@@ -9,9 +9,9 @@ toggle-debug:
 	echo "" | nc -U /tmp/instance..8086.sock
 
 run: bin
-	HOST="" PORT="8084" ./bin/instance &
-	HOST="" PORT="8085" ./bin/instance &
-	HOST="" PORT="8086" ./bin/instance &
+	HOST="" PORT="8084" HOSTNAME="host1" ./bin/instance &
+	HOST="" PORT="8085" HOSTNAME="host2" ./bin/instance &
+	HOST="" PORT="8086" HOSTNAME="host3" ./bin/instance &
 	HOST="" PORT="8083" INSTANCES=":8085,:8084,:8086" ./bin/entry &
 
 restart: down run

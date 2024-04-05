@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"sync/atomic"
+	"time"
 )
 
 type counter struct{}
@@ -18,7 +19,6 @@ var (
 	instances    []string
 	host         = os.Getenv("HOST")
 	port         = os.Getenv("PORT")
-	respBase     = "You are talking to instance %v.\nThis is request %v to this instance and request %v to the cluster.\n"
 )
 
 func (*counter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -38,19 +38,28 @@ func (*counter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	buf := make([]byte, 8)
-	_, err = conn.Read(buf)
+	binary.LittleEndian.PutUint64(buf, uint64(newClusterCount))
+	_, err = conn.Write(buf)
 	if err != nil {
-		fmt.Fprintf(w, "failed to read a response: %v\n", err)
+		fmt.Fprintf(w, "internal write error: %v\n", err)
 		return
 	}
-	instanceCount := int64(binary.LittleEndian.Uint64(buf))
 
-	resp := fmt.Sprintf(respBase, instance, instanceCount, newClusterCount)
+	resp := make([]byte, 256)
+	n, err := conn.Read(resp)
+	if err != nil {
+		fmt.Fprintf(w, "internal read error: %v\n", err)
+		return
+	}
+	resp = resp[:n]
+
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Content-Length", fmt.Sprintf("%v", len(resp)))
-	fmt.Fprintf(w, "%v", resp)
+	fmt.Fprintf(w, "%v", string(resp))
+
 }
 
 func main() {
