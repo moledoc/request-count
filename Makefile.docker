@@ -25,6 +25,7 @@ run: build
 		--network container:$(container-entry) \
 		-e HOST= \
 		-e PORT=8084 \
+		-e HOSTNAME=host1 \
 		--name $(container-instance)1 \
 		$(image-instance)
 	docker run -d -i -t \
@@ -32,6 +33,7 @@ run: build
 		--network container:$(container-entry) \
 		-e HOST= \
 		-e PORT=8085 \
+		-e HOSTNAME=host2 \
 		--name $(container-instance)2 \
 		$(image-instance)
 	docker run -d -i -t \
@@ -39,6 +41,7 @@ run: build
 		--network container:$(container-entry) \
 		-e HOST= \
 		-e PORT=8086 \
+		-e HOSTNAME=host3 \
 		--name $(container-instance)3 \
 		$(image-instance)
 
