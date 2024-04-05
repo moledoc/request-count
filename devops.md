@@ -114,7 +114,7 @@ kubectl apply -f ./devopsing/instance.yaml
 kubectl expose deployment instance --protocol=TCP
 
 INSTANCE_IP=$(kubectl get service/instance -o jsonpath='{.spec.clusterIP}')
-sed "s/INSTANCE_IP/${INSTANCE_IP}/" ./devopsing/entry.yaml | kubectl apply -f -
+sed "s/INSTANCE_IP/${INSTANCE_IP}/g" ./devopsing/entry.yaml | kubectl apply -f -
 kubectl expose deployment entry --type=NodePort --port=8083 --target-port=8083 --protocol=TCP
 ```
 
@@ -132,14 +132,18 @@ kubectl exec -it <pod name> -- <cmd ran in the pod (can be `sh`)>
 
 With this we are able to deploy our application.
 But we should be able to use better manifest files to reduce number of commands ran.
-So here is an example with less commands:
+So here is an example with less commands (NOTE: clean pods/deployments/services before running following commands):
 
 ```sh
 kubectl apply -f ./devopsing/instance_v2.yaml
-INSTANCE_IP=$(kubectl get service/instance-v2 -o jsonpath='{.spec.clusterIP}')
-sed "s/INSTANCE_IP/${INSTANCE_IP}/" ./devopsing/entry_v2.yaml | kubectl apply -f -
+INSTANCE_IP=$(kubectl get service/instance -o jsonpath='{.spec.clusterIP}')
+sed "s/INSTANCE_IP/${INSTANCE_IP}/g" ./devopsing/entry_v2.yaml | kubectl apply -f -
 curl $(minikube ip):30003
 ```
+
+## Step 4
+
+
 
 ## Author
 
