@@ -16,21 +16,20 @@ env() {
 	curl localhost:5000/v2/_catalog
 }
 
+dry() {
+	helm install --debug --dry-run request-count ./request-count
+}
+
 up() {
-	kubectl apply -f ./devopsing/instance_v2.yaml
-	INSTANCE_IP=$(kubectl get service/instance -o jsonpath='{.spec.clusterIP}')
-	sed "s/INSTANCE_IP/${INSTANCE_IP}/g" ./devopsing/entry_v2.yaml | kubectl apply -f -
-	NODE_PORT=$(kubectl get services/entry -o go-template='{{(index .spec.ports 0).nodePort}}')
-	MINIKUBE_IP=$(minikube ip)
-	echo "send request with 'curl ${MINIKUBE_IP}:${NODE_PORT}'"
+	helm install request-count ./request-count
 	sleep 15
-	curl ${MINIKUBE_IP}:${NODE_PORT}
+	NODE_PORT="$(kubectl get services/entry -o go-template='{{(index .spec.ports 0).nodePort}}')"
+	echo "NODE_PORT=$NODE_PORT"
+	curl $(minikube ip):${NODE_PORT}
 }
 
 down() {
-	kubectl get pods | grep "entry\|instance" | awk '{print $1}' | xargs -I {} kubectl delete pods/"{}"
-	kubectl get deployments | grep "entry\|instance" | awk '{print $1}' | xargs -I {} kubectl delete deployments/"{}"
-	kubectl get services | grep "entry\|instance" | awk '{print $1}' | xargs -I {} kubectl delete services/"{}"
+	helm uninstall request-count
 }
 
 clean() {
