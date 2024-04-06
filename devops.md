@@ -155,6 +155,22 @@ helm install --debug --dry-run request-count ./request-count
 ```
 produces output equivalent to the manifest files in `devopsing` directory.
 
+Next we `install` the application using `helm`
+```sh
+helm install request-count ./request-count
+```
+We can check with
+```sh
+export NODE_PORT="$(kubectl get services/entry -o go-template='{{(index .spec.ports 0).nodePort}}')"
+echo "NODE_PORT=$NODE_PORT"
+curl $(minikube ip):${NODE_PORT}
+```
+
+We can `uninstall` the application with the following command:
+```sh
+helm uninstall request-count
+```
+
 ## Author
 
 Meelis Utt

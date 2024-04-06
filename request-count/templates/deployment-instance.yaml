@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: {{ .Values.containerNameInstance }}
-        image: "{{ .Values.imageInstance.repository }} # :{{ .Values.imageInstance.tag | default .Chart.AppVersion }}"
+        image: {{ .Values.imageInstance.repository }}
         ports:
         - containerPort: {{ .Values.serviceInstance.port }}
         env:
