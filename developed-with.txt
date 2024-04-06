@@ -45,3 +45,19 @@ OpenSSL version: OpenSSL 3.0.11 19 Sep 2023
 $ make --version
 GNU Make 4.3
 Built for x86_64-pc-linux-gnu
+
+$ parallel --version            
+GNU parallel 20221122
+
+$ netcat -h
+OpenBSD netcat (Debian patchlevel 1.219-1)
+
+$ minikube version            
+minikube version: v1.32.0
+commit: 8220a6eb95f0a4d75f7f2d7b14cef975f050512d
+
+$ kubectl version            
+Client Version: version.Info{Major:"1", Minor:"20", GitVersion:"v1.20.2", GitCommit:"faecb196815e248d3ecfb03c680a4507229c2a56", GitTreeState:"archive", BuildDate:"2022-04-02T14:49:13Z", GoVersion:"go1.18", Compiler:"gc", Platform:"linux/amd64"}
+
+$ helm version
+version.BuildInfo{Version:"v3.13+unreleased", GitCommit:"833bbfa31a711663d01a90221c2648e1759b051c", GitTreeState:"clean", GoVersion:"go1.22.0"}

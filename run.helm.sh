@@ -22,7 +22,7 @@ dry() {
 
 up() {
 	helm install request-count ./request-count
-	sleep 15
+	sleep 25
 	NODE_PORT="$(kubectl get services/entry -o go-template='{{(index .spec.ports 0).nodePort}}')"
 	echo "NODE_PORT=$NODE_PORT"
 	curl $(minikube ip):${NODE_PORT}
@@ -42,6 +42,9 @@ for action in $@; do
 	case ${action} in
 		env)
 			env
+			;;
+		dry)
+			dry
 			;;
 		up)
 			up

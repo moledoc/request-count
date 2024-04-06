@@ -23,7 +23,7 @@ up() {
 	NODE_PORT=$(kubectl get services/entry -o go-template='{{(index .spec.ports 0).nodePort}}')
 	MINIKUBE_IP=$(minikube ip)
 	echo "send request with 'curl ${MINIKUBE_IP}:${NODE_PORT}'"
-	sleep 15
+	sleep 25
 	curl ${MINIKUBE_IP}:${NODE_PORT}
 }
 
