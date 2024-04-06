@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.fullnameInstance }}
+  labels:
+    {{- toYaml .Values.labelsInstance | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCountInstance }}
+  selector:
+    matchLabels:
+      {{- toYaml .Values.selectorLabelsInstance | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- toYaml .Values.labelsInstance | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .Values.containerNameInstance }}
+        image: "{{ .Values.imageInstance.repository }} # :{{ .Values.imageInstance.tag | default .Chart.AppVersion }}"
+        ports:
+        - containerPort: {{ .Values.serviceInstance.port }}
+        env:
+          {{- toYaml .Values.envInstance | nindent 8 }}

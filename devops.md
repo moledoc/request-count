@@ -143,7 +143,17 @@ curl $(minikube ip):30003
 
 ## Step 4
 
+Lets create Helm 3 charts for our application.
+We first start with creating the basic setup, clean and modify it to suit our needs.
+```sh
+helm create request-count
+```
 
+We modify the `deployment.yaml` and `service.yaml` templates so that command's
+```sh
+helm install --debug --dry-run request-count ./request-count
+```
+produces output equivalent to the manifest files in `devopsing` directory.
 
 ## Author
 
