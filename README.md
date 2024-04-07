@@ -150,7 +150,7 @@ Possible script targets are:
 
 ### Helm 3 charts
 
-Due to some annoyances with `make` and `Makefile`, separate run script for deploying application with `kubectl` was created.
+Due to some annoyances with `make` and `Makefile`, separate run script for deploying application with `helm 3 charts` was created.
 Also to note, in this project `minikube` was used to setup local Kubernetes cluster.
 When alternative to `minikube` is desired, then the alternative needs to be able to:
 * pull docker images from local docker registry;
@@ -186,11 +186,11 @@ Possible script targets are:
 To toggle extra debug logs, you need to send a TCP request to socket `/tmp/instance.<host>.<port>.sock`.
 When application is started using the steps from sections 
 
-* [Docker](# Docker) or [Docker-compose](# Docker-compose), then connect to one of the `instances` container by running
+* [Docker](#Docker) or [Docker-compose](#Docker-compose), then connect to one of the `instances` container by running
 ```sh
 docker exec -it <container id/name> sh
 ```
-* [Kubectl](# Kubectl) or [Helm 3 charts](# Helm 3 charts), then connect to one of the `instances` pods by running
+* [Kubectl](#Kubectl) or [Helm 3 charts](#Helm-3-charts), then connect to one of the `instances` pods by running
 ```sh
 kubectl exec -it <instance pod name> -- sh
 ```
