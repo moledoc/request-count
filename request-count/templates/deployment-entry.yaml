@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.fullnameEntry }}
+  labels:
+    {{- toYaml .Values.labelsEntry | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCountEntry }}
+  selector:
+    matchLabels:
+      {{- toYaml .Values.selectorLabelsEntry | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- toYaml .Values.labelsEntry | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .Values.containerNameEntry }}
+        image: {{ .Values.imageEntry.repository }}
+        ports:
+        - containerPort: {{ .Values.serviceEntry.port }}
+        env:
+        {{- toYaml .Values.envEntry | nindent 8 }}
+        - name: INSTANCES
+          value: {{-   printf " %s:%v" .Values.instanceClusterIP 8083 -}}

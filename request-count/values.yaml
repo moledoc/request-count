@@ -1,0 +1,46 @@
+fullnameInstance: instance
+labelsInstance: {"app": "instance"}
+selectorLabelsInstance: {"app": "instance"}
+containerNameInstance: instance-container
+
+replicaCountInstance: 3
+imageInstance:
+  repository: localhost:5000/count_instance
+  pullPolicy: IfNotPresent
+  tag: ""
+
+serviceInstance:
+  type: ClusterIP
+  port: 8083
+  protocol: TCP
+
+envInstance: [{"name": "HOST", "value": ""}, {"name": "PORT", "value": "8083"}]
+
+# ---
+
+fullnameEntry: entry
+labelsEntry: {"app": "entry"}
+selectorLabelsEntry: {"app": "entry"}
+containerNameEntry: entry-container
+
+replicaCountEntry: 1
+imageEntry:
+  repository: localhost:5000/count_entry
+  pullPolicy: IfNotPresent
+  tag: ""
+
+serviceEntry:
+  type: NodePort
+  port: 8083
+  targetPort: 8083
+  nodePort: 30003
+  protocol: TCP
+
+envEntry: [
+  {"name": "HOST", "value": ""},
+  {"name": "PORT", "value": "8083"}
+]
+
+# ---
+
+instanceClusterIP: &instanceClusterIP 10.109.95.97
