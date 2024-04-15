@@ -13,6 +13,16 @@ import (
 )
 
 type listenersChan chan net.Listener
+type state int
+
+const (
+	version = 1
+)
+
+const (
+	failure state = iota
+	success
+)
 
 var (
 	instanceCount atomic.Int64
@@ -95,6 +105,21 @@ func toggleDebug() {
 	}
 }
 
+func send(c net.Conn, ver int, st state, resp string) (int, error) {
+	buf := make([]byte, 3+len(resp))
+	// store version (in big-endianess) manually for now
+	buf[0] = byte(ver % 10)
+	buf[1] = byte(ver / 10)
+	buf[2] = byte(st) // success byte
+	for i, c := range resp {
+		buf[3+i] = byte(c)
+	}
+	c.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	n, err := c.Write(buf)
+	debugLog("sending %v/%v bytes of message: %q; err: %v\n", len(buf), n, string(buf), err)
+	return n, err
+}
+
 func main() {
 	debugFlag := flag.Bool("debug", false, "enable debug logs")
 	flag.Parse()
@@ -133,19 +158,27 @@ func main() {
 			go instanceCount.Add(1)
 
 			c.SetReadDeadline(time.Now().Add(5 * time.Second))
-			buf := make([]byte, 8)
+			buf := make([]byte, 11)
 			n, err := c.Read(buf)
-			clusterCount := int64(binary.LittleEndian.Uint64(buf))
-			if err != nil || n != 8 {
+			if err != nil || n != 11 {
 				debugLog("failed to read a response: %v\n", err)
+				send(c, version, failure, fmt.Sprintf("failed to read a response: %v\n", err))
 				return
 			}
+			// construct version manually for now
+			readVersion := int(buf[1]*10 + buf[0])
+			if readVersion != version {
+				debugLog("response in different version: got version %q, expected %q; aborting\n", readVersion, version)
+				send(c, readVersion, failure, fmt.Sprintf("response in different version: got version %q, expected %q; aborting\n", readVersion, version))
+				return
+			}
+			// NOTE: skip success bit for now, i.e. buf[2]
+
+			clusterCount := int64(binary.BigEndian.Uint64(buf[3:]))
 
 			resp := fmt.Sprintf(respBase, hostName, newInstanceCount, clusterCount)
-			respBytes := []byte(resp)
 			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
-			n, err = c.Write(respBytes)
-			debugLog("wrote %v/%v bytes (%v): %v\n", n, len(respBytes), respBytes, err)
+			n, err = send(c, version, success, resp)
 			if err != nil {
 				fmt.Fprintf(debugFile, "[ERROR]: failed to send new instance count: %v\n", err)
 			}
